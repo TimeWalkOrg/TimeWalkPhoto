@@ -11,9 +11,9 @@ Purpose
 Key Features
 
 	1.	Photo Capture:
-	•	Uses the device camera to capture photos.
-	•	Supports pinch-to-zoom functionality.
-	•	Plays a shutter sound when a photo is taken.
+	 •	Uses the device camera to capture photos.
+	 •	Supports pinch-to-zoom functionality.
+	 •	Plays a shutter sound when a photo is taken.
 	2.	Metadata Collection:
 	•	Collects and displays the following metadata for each photo:
 	•	GPS coordinates (latitude and longitude)
