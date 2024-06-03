@@ -340,7 +340,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KQ3X2L5SCP;
+				DEVELOPMENT_TEAM = 63K8J7P389;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TimeWalkPhoto/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to the camera for capture images.";
@@ -377,7 +377,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KQ3X2L5SCP;
+				DEVELOPMENT_TEAM = 63K8J7P389;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TimeWalkPhoto/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to the camera for capture images.";
