@@ -23,6 +23,7 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var viewCamera: UIView!
     @IBOutlet weak var viewContainer: UIView!
+    @IBOutlet weak var viewDetailContainer: UIView!
     @IBOutlet weak var viewStack: UIStackView!
     
     // MARK: - Variables
@@ -46,16 +47,52 @@ class ViewController: UIViewController {
         // Start the location manager
         locationManager.setupLocationManager()
         setUpLocationUpdates()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         DispatchQueue.global().async {
+            if !(self.captureSession?.isRunning ?? false) {
+                self.captureSession?.startRunning()
+            }
+        }
+    }
+    
+    @objc func orientationDidChange() {
+        DispatchQueue.main.async {
             
-            if self.captureSession != nil {
-                if !self.captureSession.isRunning {
-                    self.captureSession.startRunning()
+            let transition = CATransition()
+            transition.duration = 0.5
+            transition.type = .fade
+            self.viewCamera.layer.add(transition, forKey: nil)
+            
+            self.previewLayer?.removeFromSuperlayer()
+            self.viewCamera.layer.sublayers?.removeAll()
+            if let previewLayer = self.previewLayer {
+                self.viewCamera.layer.addSublayer(previewLayer)
+                var orientation: UIInterfaceOrientation = .unknown
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                    orientation = windowScene.interfaceOrientation
                 }
+                
+                var angle: CGFloat = 0.0
+                switch orientation {
+                case .landscapeLeft:
+                    angle = .pi / 2.0
+                case .landscapeRight:
+                    angle = -.pi / 2.0
+                case .portraitUpsideDown:
+                    angle = .pi
+                default:
+                    angle = 0.0
+                }
+                
+                
+                previewLayer.setAffineTransform(CGAffineTransform(rotationAngle: angle))
+                previewLayer.frame = self.viewCamera.bounds
+                self.view.layoutIfNeeded()
             }
         }
     }
@@ -101,16 +138,10 @@ class ViewController: UIViewController {
     }
     
     func setUpUI() {
-        let size = CGSize(width: 0, height: 0.5), color: UIColor = .gray
-        let radius: CGFloat = 1.5, opacity: Float = 0.4
-        
-        lblLatitude.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
-        lblLongitude.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
-        lblAltitude.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
-        lblPitch.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
-        lblCompassAngle.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
-        lblZoomFactor.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
+        let size = CGSize(width: 0, height: 0.5), color: UIColor = .black
+        let radius: CGFloat = 1.5, opacity: Float = 0.5
         btnCapture.addShadow(offset: size, color: color, radius: radius, opacity: opacity)
+        viewDetailContainer.layer.cornerRadius = 10
     }
     
     func checkCameraPermission() {
@@ -144,12 +175,12 @@ class ViewController: UIViewController {
     func setUpLocationUpdates() {
         locationManager.didUpdatePitch = { [weak self] pitch in
             guard let self = self else { return }
-            self.lblPitch.text = "Pitch: \(pitch)"
+            self.lblPitch.text = "Pitch: \(String(format: "%0.5f", pitch))"
         }
         
         locationManager.didUpdateHeading = { [weak self] heading in
             guard let self = self else { return }
-            self.lblCompassAngle.text = "Compass Angle: \(heading)"
+            self.lblCompassAngle.text = "Compass Angle: \(String(format: "%0.5f", heading))"
         }
         
         locationManager.didUpdateLocation = { [weak self] location in
@@ -195,12 +226,6 @@ class ViewController: UIViewController {
         present(alertController, animated: true, completion: nil)
     }
     
-    func showImageSavedAlert() {
-        let alertController = UIAlertController(title: "Image successfully saved to gallery.", message: nil, preferredStyle: .alert)
-        alertController.addAction(UIAlertAction(title: "Ok", style: .default))
-        present(alertController, animated: true, completion: nil)
-    }
-    
     func setupCamera() {        
         captureSession = AVCaptureSession()
         captureSession.sessionPreset = .photo
@@ -226,10 +251,10 @@ class ViewController: UIViewController {
     
     func setupLivePreview() {
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.connection?.videoOrientation = .portrait
-        viewCamera.layer.addSublayer(previewLayer)
-        previewLayer.frame = viewCamera.bounds
+        previewLayer?.videoGravity = .resizeAspectFill
+        previewLayer?.connection?.videoRotationAngle = 90
+        self.viewCamera.layer.addSublayer(self.previewLayer)
+        self.previewLayer?.frame = self.viewCamera.bounds
         
         DispatchQueue.global().async {
             self.captureSession.startRunning()
@@ -244,8 +269,10 @@ class ViewController: UIViewController {
     
     func stopCaptureSession() {
         self.previewLayer?.removeFromSuperlayer()
+        self.viewCamera.layer.sublayers?.removeAll()
         self.previewLayer = nil
         self.captureSession.stopRunning()
+        
         for input in captureSession.inputs {
             self.captureSession.removeInput(input)
         }
@@ -280,24 +307,42 @@ class ViewController: UIViewController {
 extension ViewController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         
-        guard let imageData = photo.fileDataRepresentation(), let photoImage = UIImage(data: imageData) else {
+        self.captureSession.stopRunning()
+        
+        guard let imageData = photo.fileDataRepresentation(), let imagPhoto = UIImage(data: imageData) else {
             print("Error capturing photo")
             return
         }
         
         DispatchQueue.main.async {
-            self.stopCaptureSession()
-            let stackImage = self.viewStack.getSnapshotImage()
+            let imgDetails = self.viewDetailContainer.getSnapshotImage()
             
-        
-            if let detailedImage = photoImage.merge(with: stackImage) {
+            if let detailedImage = imagPhoto.merge(with: imgDetails) {
                 UIImageWriteToSavedPhotosAlbum(detailedImage, nil, nil, nil)
             }
             
-            UIImageWriteToSavedPhotosAlbum(photoImage, nil, nil, nil)
-            self.showImageSavedAlert()
-            self.setupCamera()
+            // Save the UIImage to the photo gallery
+            UIImageWriteToSavedPhotosAlbum(imagPhoto, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+        }
+    }
+    
+    @objc func image(_ image: UIImage, didFinishSavingWithError error: NSError?, contextInfo: UnsafeRawPointer) {
+        if let error = error {
+            // we got back an error!
+            let alertController = UIAlertController(title: "Save error", message: error.localizedDescription, preferredStyle: .alert)
+            alertController.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alertController, animated: true)
+        }
+        else {
+            let alertController = UIAlertController(title: "Saved", message: "Your image has been saved to your photos", preferredStyle: .alert)
+            alertController.addAction(UIAlertAction(title: "Ok", style: .default, handler: { _ in
+                DispatchQueue.main.async {
+                    DispatchQueue.global(qos: .background).async {
+                        self.captureSession.startRunning()
+                    }
+                }
+            }))
+            present(alertController, animated: true)
         }
     }
 }
-
