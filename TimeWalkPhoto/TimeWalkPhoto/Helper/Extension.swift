@@ -86,3 +86,25 @@ extension UIImage {
         return rotatedImage ?? self
     }
 }
+
+// MARK: - Double
+extension Double {
+    func adjustPitchForOrientation() -> Double {
+        var adjustedPitch = self
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene  {
+            switch  windowScene.interfaceOrientation {
+            case .landscapeLeft:
+                adjustedPitch += 90.0
+                return adjustedPitch
+            case .landscapeRight:
+                adjustedPitch -= 90.0
+                return adjustedPitch
+            default:
+                return adjustedPitch
+            }
+        } else {
+            return adjustedPitch
+        }
+    }
+}

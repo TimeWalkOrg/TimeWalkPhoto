@@ -40,7 +40,8 @@ class LocationManager: NSObject {
             motionManager.startDeviceMotionUpdates(to: .main) { (data, error) in
                 if let validData = data {
                     let pitch = validData.attitude.pitch * 180 / .pi
-                    self.didUpdatePitch?(pitch)
+                    let accuratePitch =  pitch.adjustPitchForOrientation()
+                    self.didUpdatePitch?(accuratePitch)
                 }
             }
         }

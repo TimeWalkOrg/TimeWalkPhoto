@@ -81,14 +81,19 @@ class ViewController: UIViewController {
                 switch orientation {
                 case .landscapeLeft:
                     angle = .pi / 2.0
+                    self.locationManager.locationManager.headingOrientation = .landscapeLeft
                 case .landscapeRight:
                     angle = -.pi / 2.0
+                    self.locationManager.locationManager.headingOrientation = .landscapeRight
                 case .portraitUpsideDown:
                     angle = .pi
+                    self.locationManager.locationManager.headingOrientation = .portraitUpsideDown
+                case .portrait:
+                    self.locationManager.locationManager.headingOrientation = .portrait
                 default:
                     angle = 0.0
+                    self.locationManager.locationManager.headingOrientation = .unknown
                 }
-                
                 
                 previewLayer.setAffineTransform(CGAffineTransform(rotationAngle: angle))
                 previewLayer.frame = self.viewCamera.bounds
